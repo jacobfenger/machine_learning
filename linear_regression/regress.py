@@ -1,9 +1,10 @@
 import numpy as np
 from numpy.linalg import inv
+import sys
 
-def load_training_data():
+def load_data(file):
 
-    file = open('housing_train.txt', 'r')
+    file = open(file, 'r')
     
     X = [] # Stores the features (including a dummy variable the first column)
     Y = [] # Stores the outputs
@@ -41,15 +42,32 @@ def compute_optimal_weight_vector(X, Y):
 
     print("Optimal weight vector: ", w)
 
-def main():
+    return w
+
+def compute_sum_of_squared_error(w, X, Y):
     
+    # Compute the SSE value - needs clean up
+    SSE = np.dot(np.transpose((Y - np.dot(X, w))), (Y - np.dot(X, w)))
+    
+    return float(SSE[0])
+
+def main(args):
+    
+    training_file = args[1]
+    test_file = args[2]
+
     # Load the training data 
-    X, Y = load_training_data();
-    
-    # Compute the optimal weight vector
-    compute_optimal_weight_vector(X, Y)
+    train_X, train_Y = load_data(training_file)
+    test_X, test_Y = load_data(test_file)
 
+    # Compute the optimal weight vector from training data
+    w = compute_optimal_weight_vector(train_X, train_Y)
 
+    SSE_train = compute_sum_of_squared_error(w, train_X, train_Y)
+    SSE_test = compute_sum_of_squared_error(w, test_X, test_Y)    
+
+    print "\nSSE from the training data: ", SSE_train
+    print "SSE from the test data: ", SSE_test
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
