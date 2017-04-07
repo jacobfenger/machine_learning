@@ -26,17 +26,17 @@ def load_training_data():
     X = np.matrix(X)
     Y = np.transpose(np.matrix(Y)) # Make Y a column vector
 
-    print Y
-
     return X, Y
 
 def compute_optimal_weight_vector(X, Y):
-
+    
+    # Compute transpose of X
     X_t = np.transpose(X)
     
     w_1 = inv(np.dot(X_t, X))
     w_2 = np.dot(X_t, Y)
     
+    # Compute optimal weight vector
     w = np.dot(w_1, w_2)
 
     print("Optimal weight vector: ", w)
