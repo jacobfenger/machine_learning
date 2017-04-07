@@ -52,6 +52,11 @@ def compute_sum_of_squared_error(w, X, Y):
     return float(SSE[0])
 
 def main(args):
+
+    if len(args) != 3:
+        print "Incorrect number of command lind arguments provided."
+        print "Usage: <train file name' 'testing file name'"
+        return
     
     training_file = args[1]
     test_file = args[2]
