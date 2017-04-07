@@ -6,7 +6,7 @@ def load_data(file):
 
     file = open(file, 'r')
     
-    X = [] # Stores the features (including a dummy variable the first column)
+    X = [] # Stores the features 
     Y = [] # Stores the outputs
 
     # loop through each line in the file
@@ -18,10 +18,9 @@ def load_data(file):
         # convert the line to numbers and not strings
         # NOTE: this line is only valid in Python 2.x
         line = map(float, line)
-        
+
         # Fill the X matrix and append 1 as the dummy variable to the first column
-        # Removing the use of the dummy variable results in a higher SSE 
-        X.append([1, line[0], line[1], line[2], line[3], line[4], line[5], line[6], line[7], line[8], line[9], line[10], line[11], line[12]])
+        X.append([1] + line[0:13])
         
         Y.append(line[13])
 
@@ -65,7 +64,7 @@ def main(args):
     training_file = args[1]
     test_file = args[2]
 
-    # Load the training data 
+    # Load the training and testing data 
     train_X, train_Y = load_data(training_file)
     test_X, test_Y = load_data(test_file)
 
