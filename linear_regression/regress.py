@@ -103,15 +103,19 @@ def main(args):
 
     # Compute the optimal weight vector from training data
     w = compute_optimal_weight_vector(train_X, train_Y)
-    w_var = variant_optimal_weight_vector(train_X, train_Y, 0.5)
 
     print "Original Optimal Weight Vector:"
     print "SSE from the training data: ", compute_sum_of_squared_error(w, train_X, train_Y)
     print "SSE from the test data: ", compute_sum_of_squared_error(w, test_X, test_Y)
 
     print "Variant Weight Vector: "
-    print "Training data: ", compute_sum_of_squared_error(w_var, train_X, train_Y)
-    print "Test data: ", compute_sum_of_squared_error(w_var, test_X, test_Y)
+    for lamda in [0.01, 0.05, 0.1, 0.5, 1, 5, 100]:
+        print "Lamda: " + str(lamda)
+        w_var = variant_optimal_weight_vector(train_X, train_Y, lamda)
+        print "w_var:"
+        print w_var
+        print "Training data: ", compute_sum_of_squared_error(w_var, train_X, train_Y)
+        print "Test data: ", compute_sum_of_squared_error(w_var, test_X, test_Y)
 
 if __name__ == "__main__":
     main(sys.argv)
