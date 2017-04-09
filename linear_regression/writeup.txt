@@ -167,3 +167,8 @@ w_var:
  [ -6.04393771e-01]]
 Training data:  11407.5855155
 Test data:  1805.68669351
+
+8.
+As lambda increases, the regularization term will increase thus resulting
+in a higher SSE. If lambda decreases, the resulting norm of the weight vector
+will be closer to zero. 

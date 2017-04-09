@@ -109,7 +109,7 @@ def main(args):
     print "SSE from the test data: ", compute_sum_of_squared_error(w, test_X, test_Y)
 
     print "Variant Weight Vector: "
-    for lamda in [0.01, 0.05, 0.1, 0.5, 1, 5, 100]:
+    for lamda in [0.01, 0.05, 0.1, 0.5, 1, 5, 100, 10000000]:
         print "Lamda: " + str(lamda)
         w_var = variant_optimal_weight_vector(train_X, train_Y, lamda)
         print "w_var:"
