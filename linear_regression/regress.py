@@ -77,6 +77,13 @@ def generate_random_feature(X, a):
 
     return X
 
+def new_rand_feature(x, a):
+
+    distribution = np.random.uniform(0, a, len(x))
+    x = np.c_[x, distribution]
+
+    return x
+
 def main(args):
 
     # Ensure enough arguments are present
@@ -93,13 +100,11 @@ def main(args):
     train_X, train_Y = load_data(training_file)
     test_X, test_Y = load_data(test_file)
 
-    # Set the number of artificial features to append to X
-    # NEEDS WORK!
-    # num_features = 1
-    # for i in range(num_features):
-    #     a = random.randint(0, 10) + 1
-    #     train_X = generate_random_feature(train_X, a)
-    #     test_X = generate_random_feature(test_X, a)
+    num_features = 5
+    for i in range(num_features):
+        a = random.randint(0, 10) + 1
+        train_X = new_rand_feature(train_X, a)
+        test_X = new_rand_feature(test_X, a)
 
     # Compute the optimal weight vector from training data
     w = compute_optimal_weight_vector(train_X, train_Y)
