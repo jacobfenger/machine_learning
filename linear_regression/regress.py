@@ -1,3 +1,7 @@
+# CS 434 Assigment 1 Code
+# Jacob Fenger
+# Spike Madden
+
 import numpy as np
 from numpy.linalg import inv
 import sys
@@ -68,12 +72,14 @@ def compute_sum_of_squared_error(w, X, Y):
     return float(SSE[0])
 
 # Takes in a random integer a to represent the max range of the artificial feature
-def generate_random_feature(x, a):
+def generate_random_feature(x_train, x_test, a):
 
-    distribution = np.random.uniform(0, a, len(x))
-    x = np.c_[x, distribution]
+    distribution = np.random.uniform(0, a, len(x_train))
+    x_train = np.c_[x_train, distribution]
+    distribution = np.random.uniform(0, a, len(x_test))
+    x_test = np.c_[x_test, distribution]
 
-    return x
+    return x_train, x_test
 
 def main(args):
 
@@ -91,27 +97,34 @@ def main(args):
     train_X, train_Y = load_data(training_file)
     test_X, test_Y = load_data(test_file)
 
-    num_features = 10
-    for i in range(num_features):
-        a = random.randint(0, 100) + 1
-        train_X = generate_random_feature(train_X, a)
-        test_X = generate_random_feature(test_X, a)
+    train_SSE = []
+    test_SSE = []
 
-        print str(i+1) + " extra feature(s) added."
-
-        # Compute the optimal weight vector from training data
-        w = compute_optimal_weight_vector(train_X, train_Y)
-        print "Original Optimal Weight Vector:"
-        print "SSE from the training data: ", compute_sum_of_squared_error(w, train_X, train_Y)
-        print "SSE from the test data: ", compute_sum_of_squared_error(w, test_X, test_Y)
-
+    # COMMENTED OUT TO COMPUTE THE VARIANT WEIGHT VECTOR
+    # num_features = 10
+    # for i in range(num_features):
+    #     a = random.randint(0, 100) + 1
+    #     train_X, test_X = generate_random_feature(train_X, test_X, a)
+    #
+    #     # Compute the optimal weight vector from training data
+    #     w = compute_optimal_weight_vector(train_X, train_Y)
+    #
+    #     train_SSE.append(compute_sum_of_squared_error(w, train_X, train_Y))
+    #     test_SSE.append(compute_sum_of_squared_error(w, test_X, test_Y))
+    #
+    # print "Artificial Features #: "
+    # print range(num_features)
+    # print "Training SSE: "
+    # print train_SSE
+    # print "Testing SSE: "
+    # print test_SSE
 
     print "Variant Weight Vector: "
     for lamda in [0.01, 0.05, 0.1, 0.5, 1, 5, 100, 10000000]:
         print "Lamda: " + str(lamda)
         w_var = variant_optimal_weight_vector(train_X, train_Y, lamda)
-        print "w_var:"
-        print w_var
+        # print "w_var:"
+        # print w_var
         print "Training data: ", compute_sum_of_squared_error(w_var, train_X, train_Y)
         print "Test data: ", compute_sum_of_squared_error(w_var, test_X, test_Y)
 
