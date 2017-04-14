@@ -68,16 +68,7 @@ def compute_sum_of_squared_error(w, X, Y):
     return float(SSE[0])
 
 # Takes in a random integer a to represent the max range of the artificial feature
-def generate_random_feature(X, a):
-
-    lin_array = np.linspace(0, a, len(X))
-
-    # Append the feature vector to the last column of X
-    X = np.c_[X, lin_array]
-
-    return X
-
-def new_rand_feature(x, a):
+def generate_random_feature(x, a):
 
     distribution = np.random.uniform(0, a, len(x))
     x = np.c_[x, distribution]
@@ -100,18 +91,20 @@ def main(args):
     train_X, train_Y = load_data(training_file)
     test_X, test_Y = load_data(test_file)
 
-    num_features = 5
+    num_features = 10
     for i in range(num_features):
-        a = random.randint(0, 10) + 1
-        train_X = new_rand_feature(train_X, a)
-        test_X = new_rand_feature(test_X, a)
+        a = random.randint(0, 100) + 1
+        train_X = generate_random_feature(train_X, a)
+        test_X = generate_random_feature(test_X, a)
 
-    # Compute the optimal weight vector from training data
-    w = compute_optimal_weight_vector(train_X, train_Y)
+        print str(i+1) + " extra feature(s) added."
 
-    print "Original Optimal Weight Vector:"
-    print "SSE from the training data: ", compute_sum_of_squared_error(w, train_X, train_Y)
-    print "SSE from the test data: ", compute_sum_of_squared_error(w, test_X, test_Y)
+        # Compute the optimal weight vector from training data
+        w = compute_optimal_weight_vector(train_X, train_Y)
+        print "Original Optimal Weight Vector:"
+        print "SSE from the training data: ", compute_sum_of_squared_error(w, train_X, train_Y)
+        print "SSE from the test data: ", compute_sum_of_squared_error(w, test_X, test_Y)
+
 
     print "Variant Weight Vector: "
     for lamda in [0.01, 0.05, 0.1, 0.5, 1, 5, 100, 10000000]:
