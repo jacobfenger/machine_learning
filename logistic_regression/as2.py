@@ -6,6 +6,7 @@
 #########################################################################
 import csv
 import numpy as np
+import time
 import math
 from matplotlib import pyplot as plt
 
@@ -23,56 +24,90 @@ def read_data(filename):
         for row in reader:
             row = map(float, row)
 
-            # Reshape the array so it's 16x16
-            image = np.reshape(np.asarray(row[0:256]), (16, 16), order='F')
-
             # Add image and truth file for each row in CSV file
-            image_set.append(image)
+            image_set.append(row[0:256])
             truth_set.append(row[256])
 
-    return image_set, truth_set
 
-# Implementation of the batch gradient descent algorithm to train a binar
+
+    return np.asarray(image_set), np.asarray(truth_set)
+
+# Compute the accuracy of the approximated y value to the truth set
+def compute_accuracy(y_approx, y_truth):
+
+    correct = 0
+    num_images = len(y_truth)
+
+    for i in range(num_images):
+
+        if (round(y_approx[i]) == y_truth[i]):
+            correct += 1
+
+    accuracy = float(correct)/float(num_images)
+
+    return accuracy
+
+# Implementation of the batch gradient descent algorithm to train a binary
 # logistic regression classifier.
 # Inputs: x        -> image dataset
 #         y        -> solution dataset
 #         lrn_rate -> learning rate to be used
-def batch_gradient_descent(x, y, lrn_rate):
+def batch_gradient_descent(x, y, lrn_rate, iters):
 
     # Used as an ending condition for the algorithm
     iterations = 0
     n = len(x) # Get number of inputs
+    percent_accurate = []
 
-    y_hat = []
-    w = np.reshape([0 for i in range(256)], (16, 16))
+    y_hat = [0 for i in range(n)]
+    w = [0 for i in range(256)]
 
-    while iterations < 1:
+    while iterations < iters:
 
-        d = np.reshape([0 for i in range(256)], (16, 16))
+        d = [0 for i in range(256)]
 
         for i in range(n):
 
-            print 1 / (1 + np.exp( (-1 * w) * x[i]))
-            break;
-            #y_hat.append(1 / (1 + np.exp( np.dot(-1, w) * x[i])))
+            y_hat[i] = (1 / (1 + np.exp(np.dot(np.dot(-1, np.transpose(w)), x[i]))))
 
-            error = y[0] - y_hat[0]
+            error = y[i] - y_hat[i]
 
             d = d + np.dot(error, x[i])
 
         w = w + np.dot(lrn_rate, d)
 
+        acc = compute_accuracy(y_hat, y)
+        print "Accuracy for iteration: ", iterations
+        print acc
+        percent_accurate.append(acc)
+
         iterations += 1
+
+    return percent_accurate, [i for i in range(iters)]
+
 
 def main():
 
     img_train, truth_train = read_data('usps-4-9-train.csv')
+    img_test, truth_test = read_data('usps-4-9-test.csv')
 
-    # An example way to show an image
-    #plt.imshow(img_train[2], interpolation='none', cmap='gray')
-    #plt.show()
+    y, x = batch_gradient_descent(img_train, truth_train, .5, 10)
 
-    batch_gradient_descent(img_train, truth_train, .5)
+    # plt.plot(x, y)
+    # plt.title('Accuracy of batch gradient descent with no regularization\n'
+    #           'given a number of iterations')
+    # plt.ylabel('Accuracy compared to truth set')
+    # plt.xlabel('Number of iterations')
+    # plt.show()
+    #
+    # y, x = batch_gradient_descent(img_test, truth_test, .1, 10)
+    #
+    # plt.plot(x, y)
+    # plt.title('Accuracy of batch gradient descent with no regularization\n'
+    #           'given a number of iterations')
+    # plt.ylabel('Accuracy compared to truth set')
+    # plt.xlabel('Number of iterations')
+    # plt.show()
 
 if __name__ == "__main__":
     main()
