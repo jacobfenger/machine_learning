@@ -52,7 +52,7 @@ def compute_accuracy(y_approx, y_truth):
 # Inputs: x        -> image dataset
 #         y        -> solution dataset
 #         lrn_rate -> learning rate to be used
-def batch_gradient_descent(x, y, lrn_rate, iters):
+def batch_gradient_descent(x, y, w, lrn_rate, iters):
 
     # Used as an ending condition for the algorithm
     iterations = 0
@@ -60,7 +60,6 @@ def batch_gradient_descent(x, y, lrn_rate, iters):
     percent_accurate = []
 
     y_hat = [0 for i in range(n)]
-    w = [0 for i in range(256)]
 
     while iterations < iters:
 
@@ -77,13 +76,11 @@ def batch_gradient_descent(x, y, lrn_rate, iters):
         w = w + np.dot(lrn_rate, d)
 
         acc = compute_accuracy(y_hat, y)
-        print "Accuracy for iteration: ", iterations
-        print acc
         percent_accurate.append(acc)
 
         iterations += 1
 
-    return percent_accurate, [i for i in range(iters)]
+    return w, [i for i in range(iters)], percent_accurate
 
 
 def main():
@@ -91,23 +88,19 @@ def main():
     img_train, truth_train = read_data('usps-4-9-train.csv')
     img_test, truth_test = read_data('usps-4-9-test.csv')
 
-    y, x = batch_gradient_descent(img_train, truth_train, .5, 10)
+    w = [0 for i in range(256)]
+    w, x, y_train, = batch_gradient_descent(img_train, truth_train, w, .0000001, 100)
 
-    # plt.plot(x, y)
-    # plt.title('Accuracy of batch gradient descent with no regularization\n'
-    #           'given a number of iterations')
-    # plt.ylabel('Accuracy compared to truth set')
-    # plt.xlabel('Number of iterations')
-    # plt.show()
-    #
-    # y, x = batch_gradient_descent(img_test, truth_test, .1, 10)
-    #
-    # plt.plot(x, y)
-    # plt.title('Accuracy of batch gradient descent with no regularization\n'
-    #           'given a number of iterations')
-    # plt.ylabel('Accuracy compared to truth set')
-    # plt.xlabel('Number of iterations')
-    # plt.show()
+    w, x, y_test = batch_gradient_descent(img_test, truth_test, w, .0000001, 100)
+
+    plt.plot(x, y_train)
+    plt.plot(x, y_test)
+    plt.title('Accuracy of batch gradient descent with no regularization\n'
+              'given a number of iterations')
+    plt.ylabel('Accuracy compared to truth set')
+    plt.xlabel('Number of iterations')
+    plt.show()
+
 
 if __name__ == "__main__":
     main()
