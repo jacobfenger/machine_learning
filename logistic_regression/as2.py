@@ -50,7 +50,7 @@ def compute_accuracy(y_approx, y_truth):
 # Inputs: x        -> image dataset
 #         y        -> solution dataset
 #         lrn_rate -> learning rate to be used
-def batch_gradient_descent(x, y, w, lrn_rate, iters):
+def batch_gradient_descent(x, y, w, lrn_rate, iters, training):
 
     # Used as an ending condition for the algorithm
     iterations = 0
@@ -71,7 +71,8 @@ def batch_gradient_descent(x, y, w, lrn_rate, iters):
 
             d = d + np.dot(error, x[i])
 
-        w = w + np.dot(lrn_rate, d)
+        if training:
+            w = w + np.dot(lrn_rate, d)
 
         acc = compute_accuracy(y_hat, y)
         percent_accurate.append(acc)
@@ -85,7 +86,7 @@ def batch_gradient_descent(x, y, w, lrn_rate, iters):
 # Inputs: x        -> image dataset
 #         y        -> solution dataset
 #         lrn_rate -> learning rate to be used
-def modified_batch_gradient_descent(x, y, w, lrn_rate, iters, lamda):
+def modified_batch_gradient_descent(x, y, w, lrn_rate, iters, lamda, training):
 
     # Used as an ending condition for the algorithm
     iterations = 0
@@ -106,7 +107,8 @@ def modified_batch_gradient_descent(x, y, w, lrn_rate, iters, lamda):
 
             d = d + np.dot(error, x[i])
 
-        w = w + np.dot(lrn_rate, d + np.dot(lamda, w))
+        if training:
+            w = w + np.dot(lrn_rate, d + np.dot(lamda, w))
 
         acc = compute_accuracy(y_hat, y)
         percent_accurate.append(acc)
@@ -121,23 +123,49 @@ def main():
     img_train, truth_train = read_data('usps-4-9-train.csv')
     img_test, truth_test = read_data('usps-4-9-test.csv')
 
-    learning_rate = 0.00000001
+    learning_rate = 0.0000001
 
-    lamdas = [0.01, 0.1, 1, 10, 100, 1000]
+    w = [0 for i in range(256)]
 
-    for lamda in lamdas:
-        w = [0 for i in range(256)]
-        w, x, y_train, = modified_batch_gradient_descent(img_train, truth_train, w, learning_rate, 10, lamda)
+    training = 1
 
-        w, x, y_test = modified_batch_gradient_descent(img_test, truth_test, w, learning_rate, 10, lamda)
+    w, x, y_train, = batch_gradient_descent(img_train, truth_train, w, learning_rate, 100, training)
 
-        plt.plot(x, y_train)
-        plt.plot(x, y_test)
-        plt.title('Accuracy of batch gradient descent with regularization lamda of %s\n'
-        'given a number of iterations'%(lamda))
-        plt.ylabel('Accuracy compared to truth set')
-        plt.xlabel('Number of iterations')
-        plt.show()
+    training = 0
+
+    w, x, y_test = batch_gradient_descent(img_test, truth_test, w, learning_rate, 100, training)
+
+    plt.plot(x, y_train)
+    plt.plot(x, y_test)
+    plt.title('Accuracy of batch gradient descent with no regularization\n'
+    'given a number of iterations')
+    plt.ylabel('Accuracy compared to truth set')
+    plt.xlabel('Number of iterations')
+    plt.show()
+
+    # PART 4
+    # modified batch gradient algorithm
+    # with l2 regularization
+    #
+    # lamdas = [0.01, 0.1, 1, 10, 100, 1000]
+    #
+    # for lamda in lamdas:
+    #     w = [0 for i in range(256)]
+    #     training = 1
+    #
+    #     w, x, y_train, = modified_batch_gradient_descent(img_train, truth_train, w, learning_rate, 100, lamda, training)
+    #
+    #     training = 0
+    #
+    #     w, x, y_test = modified_batch_gradient_descent(img_test, truth_test, w, learning_rate, 100, lamda, training)
+    #
+    #     plt.plot(x, y_train)
+    #     plt.plot(x, y_test)
+    #     plt.title('Accuracy of batch gradient descent with regularization lamda of %s\n'
+    #     'given a number of iterations'%(lamda))
+    #     plt.ylabel('Accuracy compared to truth set')
+    #     plt.xlabel('Number of iterations')
+    #     plt.show()
 
 if __name__ == "__main__":
     main()
