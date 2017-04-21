@@ -28,8 +28,6 @@ def read_data(filename):
             image_set.append(row[0:256])
             truth_set.append(row[256])
 
-
-
     return np.asarray(image_set), np.asarray(truth_set)
 
 # Compute the accuracy of the approximated y value to the truth set
@@ -67,7 +65,7 @@ def batch_gradient_descent(x, y, w, lrn_rate, iters):
 
         for i in range(n):
 
-            y_hat[i] = (1 / (1 + np.exp(np.dot(np.dot(-1, np.transpose(w)), x[i]))))
+            y_hat[i] = (1 / (1 + np.exp(np.dot(np.dot(-1, w), x[i]))))
 
             error = y[i] - y_hat[i]
 
@@ -82,25 +80,64 @@ def batch_gradient_descent(x, y, w, lrn_rate, iters):
 
     return w, [i for i in range(iters)], percent_accurate
 
+# Implementation of the batch gradient descent algorithm to train a binary
+# logistic regression classifier.
+# Inputs: x        -> image dataset
+#         y        -> solution dataset
+#         lrn_rate -> learning rate to be used
+def modified_batch_gradient_descent(x, y, w, lrn_rate, iters, lamda):
+
+    # Used as an ending condition for the algorithm
+    iterations = 0
+    n = len(x) # Get number of inputs
+    percent_accurate = []
+
+    y_hat = [0 for i in range(n)]
+
+    while iterations < iters:
+
+        d = [0 for i in range(256)]
+
+        for i in range(n):
+
+            y_hat[i] = (1 / (1 + np.exp(np.dot(np.dot(-1, w), x[i]))))
+
+            error = y[i] - y_hat[i]
+
+            d = d + np.dot(error, x[i])
+
+        w = w + np.dot(lrn_rate, d + np.dot(lamda, w))
+
+        acc = compute_accuracy(y_hat, y)
+        percent_accurate.append(acc)
+
+        iterations += 1
+
+    return w, [i for i in range(iters)], percent_accurate
+
 
 def main():
 
     img_train, truth_train = read_data('usps-4-9-train.csv')
     img_test, truth_test = read_data('usps-4-9-test.csv')
 
-    w = [0 for i in range(256)]
-    w, x, y_train, = batch_gradient_descent(img_train, truth_train, w, .0000001, 100)
+    learning_rate = 0.00000001
 
-    w, x, y_test = batch_gradient_descent(img_test, truth_test, w, .0000001, 100)
+    lamdas = [0.01, 0.1, 1, 10, 100, 1000]
 
-    plt.plot(x, y_train)
-    plt.plot(x, y_test)
-    plt.title('Accuracy of batch gradient descent with no regularization\n'
-              'given a number of iterations')
-    plt.ylabel('Accuracy compared to truth set')
-    plt.xlabel('Number of iterations')
-    plt.show()
+    for lamda in lamdas:
+        w = [0 for i in range(256)]
+        w, x, y_train, = modified_batch_gradient_descent(img_train, truth_train, w, learning_rate, 10, lamda)
 
+        w, x, y_test = modified_batch_gradient_descent(img_test, truth_test, w, learning_rate, 10, lamda)
+
+        plt.plot(x, y_train)
+        plt.plot(x, y_test)
+        plt.title('Accuracy of batch gradient descent with regularization lamda of %s\n'
+        'given a number of iterations'%(lamda))
+        plt.ylabel('Accuracy compared to truth set')
+        plt.xlabel('Number of iterations')
+        plt.show()
 
 if __name__ == "__main__":
     main()
