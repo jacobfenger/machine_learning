@@ -123,9 +123,9 @@ def main():
 
         fold_error.append(leave_one_out_validation(train_ftrs, train_truth, i))
 
-        training_error.append(compute_knn_error(i, train_truth, train_ftrs, train_ftrs, train_truth))
+        training_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth))
 
-        testing_error.append(compute_knn_error(i, train_truth, train_ftrs, test_ftrs, test_truth))
+        testing_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
 
     print "TRAINING: "
     print training_error
