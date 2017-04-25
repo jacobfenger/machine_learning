@@ -14,7 +14,7 @@ import itertools
 # Will return the list of normalize features
 def normalize_features(features, min_range, max_range):
 
-    return features / features.max(axis=0)
+    return (features - features.min(axis=0)) / (features.max(axis=0) - features.min(axis=0))
 
 # Read data from a CSV file and then normalize the features
 # Returns the truth labels and normalized feature array
