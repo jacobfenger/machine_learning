@@ -104,34 +104,40 @@ def compute_knn_accuracy(k, feature_truth, feature_set, test_set, test_truth):
     for j in range(len(test_set)):
         cl = k_nearest_neighbor(k, feature_truth, feature_set, test_set[j])
 
-        if cl == test_truth[j]:
+        if cl != test_truth[j]:
             count += 1
 
-    return float(count)/len(test_truth)
+    return (1 - float(count)/len(test_truth), count)
 
 def main():
 
     train_truth, train_ftrs = read_data('knn_train.csv')
     test_truth, test_ftrs = read_data('knn_test.csv')
 
-    k = [i for i in range(1, 53, 2)]
+    k = [i for i in range(1, 31, 2)]
     training_error = []
     testing_error = []
     fold_error = []
+    incorrect_count = []
 
     for i in k:
 
         fold_error.append(leave_one_out_validation(train_ftrs, train_truth, i))
 
-        training_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth))
+        training_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth)[0])
 
-        testing_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
+        accuracy, errors = compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth)
+
+        testing_error.append(accuracy)
+        incorrect_count.append(errors)
+
 
     print "TRAINING: "
     print training_error
 
     print "TESTING: "
     print testing_error
+    print incorrect_count
 
     print "FOLDING: "
     print fold_error
