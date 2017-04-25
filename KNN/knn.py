@@ -61,9 +61,6 @@ def find_neighbors(K, training_set, test):
 # Returns the classification found for the test set
 def k_nearest_neighbor(K, truth, training_set, test_point):
 
-    classification = []
-
-
     vote = 0
 
     neighbors = find_neighbors(K, training_set, test_point)
@@ -77,23 +74,40 @@ def k_nearest_neighbor(K, truth, training_set, test_point):
     else:
         return -1
 
-def compute_error(classification, truth_set):
+# Implementation of the leave-one-out cross validation
+def leave_one_out_validation(feature_set, truth_set, k):
+
     count = 0
 
-    for i in range(len(classification)):
-        if classification[i] != truth_set[i]:
+    for i in range(len(feature_set)):
+
+        train_ftrs = copy.deepcopy(feature_set)
+        train_truth = copy.deepcopy(truth_set)
+
+        validation_ftr = train_ftrs[i]
+        truth_value = truth_set[i]
+
+        train_ftrs = np.delete(train_ftrs, i, 0)
+        train_truth = np.delete(truth_set, i, 0)
+
+        classification = k_nearest_neighbor(k, train_truth, train_ftrs, validation_ftr)
+
+        if truth_value == classification:
             count += 1
 
-    return count
+    return float(count)/len(feature_set)
 
-def compute_accuracy(classification, truth_set):
+def compute_knn_accuracy(k, feature_truth, feature_set, test_set, test_truth):
+
     count = 0
 
-    for i in range(len(classification)):
-        if classification[i] == truth_set[i]:
+    for j in range(len(test_set)):
+        cl = k_nearest_neighbor(k, feature_truth, feature_set, test_set[j])
+
+        if cl == test_truth[j]:
             count += 1
 
-    return float(count)/float(len(truth_set))
+    return float(count)/len(test_truth)
 
 def main():
 
@@ -105,52 +119,15 @@ def main():
     testing_error = []
     fold_error = []
 
-
     for i in k:
-        count = 0
 
-        # Iterate through each of the folds
-        for s in range(len(train_ftrs)):
+        fold_error.append(leave_one_out_validation(train_ftrs, train_truth, i))
 
-            train_ftrs_split = copy.deepcopy(train_ftrs)
-            train_truth_split = copy.deepcopy(train_truth)
-            validation_list = []
-            truth_value = 0
+        training_error.append(compute_knn_error(i, train_truth, train_ftrs, train_ftrs, train_truth))
 
-            validation_list = train_ftrs_split[s]
-            truth_value = train_truth_split[s]
+        testing_error.append(compute_knn_error(i, train_truth, train_ftrs, test_ftrs, test_truth))
 
-            train_ftrs_split = np.delete(train_ftrs_split, s, 0)
-            train_truth_split = np.delete(train_truth_split, s, 0)
-
-            classification = k_nearest_neighbor(i, train_truth_split, train_ftrs_split, validation_list)
-
-            if truth_value == classification:
-                count += 1
-
-        fold_error.append(float(count)/len(train_ftrs))
-
-        count = 0
-
-        for j in range(len(train_ftrs)):
-            cl = k_nearest_neighbor(i, train_truth, train_ftrs, train_ftrs[j])
-
-            if cl == train_truth[j]:
-                count += 1
-
-        training_error.append(float(count)/len(train_ftrs))
-
-        count = 0
-
-        for j in range(len(test_ftrs)):
-            cl = k_nearest_neighbor(i, train_truth, train_ftrs, test_ftrs[j])
-
-            if cl == test_truth[j]:
-                count += 1
-
-        testing_error.append(float(count)/len(train_ftrs))
-
-    print "TRAING: "
+    print "TRAINING: "
     print training_error
 
     print "TESTING: "
