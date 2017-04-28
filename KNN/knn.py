@@ -110,6 +110,23 @@ def compute_knn_accuracy(k, feature_truth, feature_set, test_set, test_truth):
 
     return count
 
+def run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs):
+
+    k = [i for i in range(1, 53, 2)]
+    training_mistakes = []
+    testing_mistakes = []
+    fold_mistakes = []
+
+    for i in k:
+
+        fold_mistakes.append(leave_one_out_validation(train_ftrs, train_truth, i))
+
+        training_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth))
+
+        testing_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
+
+    graph_data(k, fold_mistakes, training_mistakes, testing_mistakes)
+
 def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
 
     trn, = plt.plot(k, training_mistakes, label='Training')
@@ -133,20 +150,7 @@ def main():
     train_truth, train_ftrs = read_data('knn_train.csv')
     test_truth, test_ftrs = read_data('knn_test.csv')
 
-    k = [i for i in range(1, 53, 2)]
-    training_mistakes = []
-    testing_mistakes = []
-    fold_mistakes = []
-
-    for i in k:
-
-        fold_mistakes.append(leave_one_out_validation(train_ftrs, train_truth, i))
-
-        training_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth))
-
-        testing_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
-
-    graph_data(k, fold_mistakes, training_mistakes, testing_mistakes)
+    run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
 
 if __name__ == '__main__':
     main()
