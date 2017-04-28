@@ -8,6 +8,7 @@ import csv
 import numpy as np
 import math
 import copy
+from matplotlib import pyplot as plt
 import itertools
 
 # Normalize the features so they have the same range of values ([0, 1])
@@ -92,10 +93,10 @@ def leave_one_out_validation(feature_set, truth_set, k):
 
         classification = k_nearest_neighbor(k, train_truth, train_ftrs, validation_ftr)
 
-        if truth_value == classification:
+        if truth_value != classification:
             count += 1
 
-    return float(count)/len(feature_set)
+    return count
 
 def compute_knn_accuracy(k, feature_truth, feature_set, test_set, test_truth):
 
@@ -107,40 +108,45 @@ def compute_knn_accuracy(k, feature_truth, feature_set, test_set, test_truth):
         if cl != test_truth[j]:
             count += 1
 
-    return (1 - float(count)/len(test_truth), count)
+    return count
+
+def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
+
+    trn, = plt.plot(k, training_mistakes, label='Training')
+    fld, = plt.plot(k, fold_mistakes, label='Folding')
+    tst, = plt.plot(k, testing_mistakes, label='Testing')
+
+    plt.legend([trn, fld, tst], ["Training", "Folding", "Testing"])
+
+    plt.title("Number of Mistakes for Training, Leave-One-Out-Validation, And"
+                " Testing")
+
+    plt.ylabel("Number of Mistakes")
+    plt.xlabel("Number of Neighbors")
+
+    plt.xlim([1, 51])
+
+    plt.show()
 
 def main():
 
     train_truth, train_ftrs = read_data('knn_train.csv')
     test_truth, test_ftrs = read_data('knn_test.csv')
 
-    k = [i for i in range(1, 31, 2)]
-    training_error = []
-    testing_error = []
-    fold_error = []
-    incorrect_count = []
+    k = [i for i in range(1, 53, 2)]
+    training_mistakes = []
+    testing_mistakes = []
+    fold_mistakes = []
 
     for i in k:
 
-        fold_error.append(leave_one_out_validation(train_ftrs, train_truth, i))
+        fold_mistakes.append(leave_one_out_validation(train_ftrs, train_truth, i))
 
-        training_error.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth)[0])
+        training_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, train_ftrs, train_truth))
 
-        accuracy, errors = compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth)
+        testing_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
 
-        testing_error.append(accuracy)
-        incorrect_count.append(errors)
-
-
-    print "TRAINING: "
-    print training_error
-
-    print "TESTING: "
-    print testing_error
-    print incorrect_count
-
-    print "FOLDING: "
-    print fold_error
+    graph_data(k, fold_mistakes, training_mistakes, testing_mistakes)
 
 if __name__ == '__main__':
     main()
