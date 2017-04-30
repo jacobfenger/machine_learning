@@ -132,25 +132,16 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
     trn, = plt.plot(k, training_mistakes, label='Training')
     fld, = plt.plot(k, fold_mistakes, label='Folding')
     tst, = plt.plot(k, testing_mistakes, label='Testing')
-
     plt.legend([trn, fld, tst], ["Training", "Folding", "Testing"])
-
     plt.title("Number of Mistakes for Training, Leave-One-Out-Validation, And"
                 " Testing")
-
     plt.ylabel("Number of Mistakes")
     plt.xlabel("Number of Neighbors")
-
     plt.xlim([1, 51])
-
     plt.show()
 
-def main():
-
-    train_truth, train_ftrs = read_data('knn_train.csv')
-    test_truth, test_ftrs = read_data('knn_test.csv')
-
-    #run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
+# Returns a tuple with the test value and feature number
+def get_best_feature(data, truth):
 
     greater = []
     smaller = []
@@ -159,10 +150,9 @@ def main():
     best_num_correct = 0
     best_boundary = 0
 
+    for feature in range(len(data[0])):
 
-    for feature in range(len(train_ftrs[0])):
-
-        boundaries = [float(train_ftrs[i][feature]) for i in range(len(train_truth))]
+        boundaries = [float(data[i][feature]) for i in range(len(truth))]
 
         for i in range(len(boundaries)):
 
@@ -171,9 +161,9 @@ def main():
 
             for j in range(len(boundaries)):
                 if boundaries[j] > boundaries[i]:
-                    greater.append((j, train_truth[j]))
+                    greater.append((j, truth[j]))
                 elif boundaries[j] < boundaries[i]:
-                    smaller.append((j, train_truth[j]))
+                    smaller.append((j, truth[j]))
 
             correct = 0
 
@@ -196,6 +186,20 @@ def main():
 
     print best_boundaries
     print best_nums
+
+def create_tree(max_depth, data, truth):
+    root = {}
+
+    test = get_best_feature(data, truth)
+
+def main():
+
+    train_truth, train_ftrs = read_data('knn_train.csv')
+    test_truth, test_ftrs = read_data('knn_test.csv')
+
+    #run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
+
+    create_tree(1, train_ftrs, train_truth)
 
 
 if __name__ == '__main__':
