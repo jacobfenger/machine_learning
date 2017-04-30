@@ -37,7 +37,7 @@ def read_data(filename):
     features = np.asarray(features)
     true_labels = np.asarray(true_labels)
 
-    features = normalize_features(features, 0, 1)
+    #features = normalize_features(features, 0, 1)
 
     return true_labels, features
 
@@ -150,7 +150,53 @@ def main():
     train_truth, train_ftrs = read_data('knn_train.csv')
     test_truth, test_ftrs = read_data('knn_test.csv')
 
-    run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
+    #run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
+
+    greater = []
+    smaller = []
+    best_boundaries = []
+    best_nums = []
+    best_num_correct = 0
+    best_boundary = 0
+
+
+    for feature in range(len(train_ftrs[0])):
+
+        boundaries = [float(train_ftrs[i][feature]) for i in range(len(train_truth))]
+
+        for i in range(len(boundaries)):
+
+            greater = []
+            smaller = []
+
+            for j in range(len(boundaries)):
+                if boundaries[j] > boundaries[i]:
+                    greater.append((j, train_truth[j]))
+                elif boundaries[j] < boundaries[i]:
+                    smaller.append((j, train_truth[j]))
+
+            correct = 0
+
+            for x in greater:
+                if x[1] == 1:
+                    correct += 1
+
+            for y in smaller:
+                if y[1] == -1:
+                    correct += 1
+
+            if correct > best_num_correct:
+                best_num_correct = correct
+                best_boundary = boundaries[i]
+
+        best_boundaries.append(best_boundary)
+        best_nums.append(best_num_correct)
+        best_num_correct = 0
+        best_boundary = 0
+
+    print best_boundaries
+    print best_nums
+
 
 if __name__ == '__main__':
     main()
