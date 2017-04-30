@@ -143,12 +143,9 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
 # Returns a tuple with the test value and feature number
 def get_best_feature(data, truth):
 
-    greater = []
-    smaller = []
-    best_boundaries = []
-    best_nums = []
-    best_num_correct = 0
+    best_information_gain = 0
     best_boundary = 0
+    best_feature_index = -1
 
     for feature in range(len(data[0])):
 
@@ -165,27 +162,43 @@ def get_best_feature(data, truth):
                 elif boundaries[j] < boundaries[i]:
                     smaller.append((j, truth[j]))
 
-            correct = 0
+            greater_correct = 0
+            smaller_correct = 0
 
             for x in greater:
                 if x[1] == 1:
-                    correct += 1
+                    greater_correct += 1
 
             for y in smaller:
                 if y[1] == -1:
-                    correct += 1
+                    smaller_correct += 1
 
-            if correct > best_num_correct:
-                best_num_correct = correct
+            greater_wrong = len(greater) - greater_correct
+            smaller_wrong = len(smaller) - smaller_correct
+
+            information_gain = 0
+            greater_information_gain = 0
+            smaller_information_gain = 0
+
+            if greater_correct == 0 or greater_wrong == 0:
+                greater_information_gain = 0
+            else:
+                greater_information_gain = -1 * float(greater_correct)/len(greater) * math.log(float(greater_correct)/len(greater), 2) - float(greater_wrong)/len(greater) * math.log(float(greater_wrong)/len(greater), 2)
+
+            if smaller_correct == 0 or smaller_wrong == 0:
+                smaller_information_gain = 0
+            else:
+                smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
+
+            information_gain = 1 - float(len(greater))/len(boundaries) * greater_information_gain - float(len(smaller))/len(boundaries) * smaller_information_gain
+
+            if information_gain > best_information_gain:
+                best_information_gain = information_gain
                 best_boundary = boundaries[i]
+                best_feature_index = feature
 
-        best_boundaries.append(best_boundary)
-        best_nums.append(best_num_correct)
-        best_num_correct = 0
-        best_boundary = 0
-
-    print best_boundaries
-    print best_nums
+    # print (best_feature_index, best_boundary)
+    return (best_feature_index, best_boundary)
 
 def create_tree(max_depth, data, truth):
     root = {}
