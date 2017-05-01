@@ -140,11 +140,11 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
     plt.xlim([1, 51])
     plt.show()
 
-def _compute_info_gain(greater, smaller, parent):
+def _compute_info_gain(greater, smaller, p_gain):
 
     greater_correct = 0
     smaller_correct = 0
-    total_data_points = len(parent)
+    total_data_points = len(greater) + len(smaller)
 
     for x in greater:
         if x[0] == 1:
@@ -171,16 +171,18 @@ def _compute_info_gain(greater, smaller, parent):
     else:
         smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
 
-    information_gain = 1 - float(len(greater))/total_data_points * greater_information_gain - float(len(smaller))/total_data_points * smaller_information_gain
+    information_gain = p_gain - float(len(greater))/total_data_points * greater_information_gain - float(len(smaller))/total_data_points * smaller_information_gain
 
     return information_gain
 
 # Returns information to be stored in a node of the decision tree
-def get_best_feature(data):
+def get_best_feature(data, parent_gain):
 
     best_gain = 0
     best_boundary = 0
     best_feature_index = -1
+    left = []
+    right = []
 
     for feature in range(1,len(data[0])):
 
@@ -192,13 +194,12 @@ def get_best_feature(data):
             smaller = []
 
             for j in range(len(boundaries)):
-                if boundaries[j] > boundaries[i]:
+                if boundaries[j] >= boundaries[i]:
                     greater.append(data[j])
                 elif boundaries[j] < boundaries[i]:
                     smaller.append(data[j])
 
-            gain = _compute_info_gain(greater, smaller, data)
-
+            gain = _compute_info_gain(greater, smaller, parent_gain)
             if gain > best_gain:
                 best_gain = gain
                 best_boundary = boundaries[i]
@@ -212,20 +213,13 @@ def get_best_feature(data):
 # Takes in the current node, the maximum depth, and the current depth
 def build_tree(node, max_depth, depth):
 
-    left = node['left']
-    right = node['right']
-
     if depth >= max_depth:
         return
 
-    # If the left or right groups are empty return
-    if not left or not right:
-        return
-
-    node['left'] = get_best_feature(node['left'])
+    node['left'] = get_best_feature(left, node['gain'])
     build_tree(node['left'], max_depth, depth+1)
 
-    node['right'] = get_best_feature(node['right'])
+    node['right'] = get_best_feature(right, node['gain'])
     build_tree(node['right'], max_depth, depth+1)
 
 # Compute the majority class based on the input data group
@@ -243,19 +237,15 @@ def majority_class(data_group):
 
 def init_tree(max_depth, data):
 
-    root = get_best_feature(data)
+    root = get_best_feature(data, 1)
     build_tree(root, max_depth, 1)
+
     print "NOTE: F(number) corresponds to the feature number."
     print_tree(root, 0)
 
-# Thanks to:
-#http://machinelearningmastery.com/implement-decision-tree-algorithm-scratch-python/
-# For a nice printing function.
-# We updated it to reflect assignment reqs
 def print_tree(node, depth):
-
     if isinstance(node, dict):
-        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']+1), node['value'], node['gain'])))
+        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']), node['value'], node['gain'])))
         print_tree(node['left'], depth+1)
         print_tree(node['right'], depth+1)
     else:
