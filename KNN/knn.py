@@ -140,7 +140,7 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
     plt.xlim([1, 51])
     plt.show()
 
-def _compute_info_gain(greater, smaller, p_gain):
+def _compute_info_gain(greater, smaller):
 
     greater_correct = 0
     smaller_correct = 0
@@ -171,9 +171,7 @@ def _compute_info_gain(greater, smaller, p_gain):
     else:
         smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
 
-    information_gain = p_gain - float(len(greater))/total_data_points * greater_information_gain - float(len(smaller))/total_data_points * smaller_information_gain
-
-    return information_gain
+    return float(len(greater))/total_data_points * greater_information_gain, float(len(smaller))/total_data_points * smaller_information_gain
 
 # Returns information to be stored in a node of the decision tree
 def get_best_feature(data, parent_gain):
@@ -199,7 +197,9 @@ def get_best_feature(data, parent_gain):
                 elif boundaries[j] < boundaries[i]:
                     smaller.append(data[j])
 
-            gain = _compute_info_gain(greater, smaller, parent_gain)
+            g_gain, l_gain = _compute_info_gain(greater, smaller)
+            gain = parent_gain - g_gain - l_gain
+
             if gain > best_gain:
                 best_gain = gain
                 best_boundary = boundaries[i]
@@ -208,18 +208,24 @@ def get_best_feature(data, parent_gain):
                 left = smaller
 
     return {'index': best_feature_index, 'value': best_boundary,
-            'left': left, 'right': right, 'gain': best_gain}
+            'left': left, 'right': right, 'gain': (best_gain, g_gain, l_gain)}
 
 # Takes in the current node, the maximum depth, and the current depth
 def build_tree(node, max_depth, depth):
 
     if depth >= max_depth:
+        node['left'] = majority_class(node['left'])
+        node['right'] = majority_class(node['right'])
         return
 
-    node['left'] = get_best_feature(node['left'], node['gain'])
+    if not node['left'] or not node['right']:
+        node['left'] = node['right'] = majority_class(node['left'] + node['right'])
+        return
+
+    node['left'] = get_best_feature(node['left'], node['gain'][2])
     build_tree(node['left'], max_depth, depth+1)
 
-    node['right'] = get_best_feature(node['right'], node['gain'])
+    node['right'] = get_best_feature(node['right'], node['gain'][1])
     build_tree(node['right'], max_depth, depth+1)
 
 # Compute the majority class based on the input data group
@@ -240,20 +246,45 @@ def init_tree(max_depth, data):
     root = get_best_feature(data, 1)
     build_tree(root, max_depth, 1)
 
-    print "NOTE: F(number) corresponds to the feature number."
-    print_tree(root, 0)
+    return root
 
 def print_tree(node, depth):
+
     if isinstance(node, dict):
-        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']), node['value'], node['gain'])))
+        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']), node['value'], node['gain'][0])))
         print_tree(node['left'], depth+1)
         print_tree(node['right'], depth+1)
     else:
-        x = majority_class(node)
-        if x is 1:
-            print (depth+1)*' ' + str(x)
+        print (depth)*' ' + "Class: "+ str(node)
+
+# Special thanks to Jason Brownlee @ Machinelearningmastery.com
+# for some advice on an efficient prediction method :)
+def predict(node, data_row):
+
+    if data_row[node['index']-1] >= node['value']:
+        if isinstance(node['right'], dict):
+            return predict(node['right'], data_row)
         else:
-            print depth*' ' + str(x)
+            return node['right']
+    else:
+        if isinstance(node['left'], dict):
+            return predict(node['left'], data_row)
+        else:
+            return node['left']
+
+def classify(tree, data_set, truth_set):
+    classification = []
+    correct = 0
+
+    for row in data_set:
+        classification.append(predict(tree, row))
+
+    for i in range(len(classification)):
+        if classification[i] == truth_set[i]:
+            correct += 1
+
+    return 1 - float(correct)/len(truth_set)
+
 def main():
 
     train_truth, train_ftrs = read_data('knn_train.csv')
@@ -264,7 +295,22 @@ def main():
     # Regroup data set
     train_data = np.insert(train_ftrs, 0, train_truth, axis=1)
 
-    init_tree(3, train_data)
+    stump = init_tree(1, train_data)
+    #print_tree(stump, 0)
+
+    error = classify(stump, train_ftrs, train_truth)
+    print "TRAINING ERROR FOR STUMP: ", error
+    error = classify(stump, test_ftrs, test_truth)
+    print "TESTING ERROR FOR STUMP: ", error
+
+    depth_6_tree = init_tree(6, train_data)
+    print_tree(depth_6_tree, 0)
+
+    error = classify(depth_6_tree, train_ftrs, train_truth)
+    print "TRAINING ERROR FOR DEPTH 6 TREE: ", error
+    error = classify(depth_6_tree, test_ftrs, test_truth)
+    print "TESTING ERROR FOR DEPTH 6 TREE: ", error
+
 
 
 if __name__ == '__main__':
