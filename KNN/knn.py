@@ -216,10 +216,10 @@ def build_tree(node, max_depth, depth):
     if depth >= max_depth:
         return
 
-    node['left'] = get_best_feature(left, node['gain'])
+    node['left'] = get_best_feature(node['left'], node['gain'])
     build_tree(node['left'], max_depth, depth+1)
 
-    node['right'] = get_best_feature(right, node['gain'])
+    node['right'] = get_best_feature(node['right'], node['gain'])
     build_tree(node['right'], max_depth, depth+1)
 
 # Compute the majority class based on the input data group
