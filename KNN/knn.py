@@ -140,16 +140,51 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
     plt.xlim([1, 51])
     plt.show()
 
-# Returns a tuple with the test value and feature number
-def get_best_feature(data, truth):
+def _compute_info_gain(greater, smaller, parent):
 
-    best_information_gain = 0
+    greater_correct = 0
+    smaller_correct = 0
+    total_data_points = len(parent)
+
+    for x in greater:
+        if x[0] == 1:
+            greater_correct += 1
+
+    for y in smaller:
+        if y[0] == -1:
+            smaller_correct += 1
+
+    greater_wrong = len(greater) - greater_correct
+    smaller_wrong = len(smaller) - smaller_correct
+
+    information_gain = 0
+    greater_information_gain = 0
+    smaller_information_gain = 0
+
+    if greater_correct == 0 or greater_wrong == 0:
+        greater_information_gain = 0
+    else:
+        greater_information_gain = -1 * float(greater_correct)/len(greater) * math.log(float(greater_correct)/len(greater), 2) - float(greater_wrong)/len(greater) * math.log(float(greater_wrong)/len(greater), 2)
+
+    if smaller_correct == 0 or smaller_wrong == 0:
+        smaller_information_gain = 0
+    else:
+        smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
+
+    information_gain = 1 - float(len(greater))/total_data_points * greater_information_gain - float(len(smaller))/total_data_points * smaller_information_gain
+
+    return information_gain
+
+# Returns information to be stored in a node of the decision tree
+def get_best_feature(data):
+
+    best_gain = 0
     best_boundary = 0
     best_feature_index = -1
 
-    for feature in range(len(data[0])):
+    for feature in range(1,len(data[0])):
 
-        boundaries = [float(data[i][feature]) for i in range(len(truth))]
+        boundaries = [float(data[i][feature]) for i in range( len(data))]
 
         for i in range(len(boundaries)):
 
@@ -158,53 +193,77 @@ def get_best_feature(data, truth):
 
             for j in range(len(boundaries)):
                 if boundaries[j] > boundaries[i]:
-                    greater.append((j, truth[j]))
+                    greater.append(data[j])
                 elif boundaries[j] < boundaries[i]:
-                    smaller.append((j, truth[j]))
+                    smaller.append(data[j])
 
-            greater_correct = 0
-            smaller_correct = 0
+            gain = _compute_info_gain(greater, smaller, data)
 
-            for x in greater:
-                if x[1] == 1:
-                    greater_correct += 1
-
-            for y in smaller:
-                if y[1] == -1:
-                    smaller_correct += 1
-
-            greater_wrong = len(greater) - greater_correct
-            smaller_wrong = len(smaller) - smaller_correct
-
-            information_gain = 0
-            greater_information_gain = 0
-            smaller_information_gain = 0
-
-            if greater_correct == 0 or greater_wrong == 0:
-                greater_information_gain = 0
-            else:
-                greater_information_gain = -1 * float(greater_correct)/len(greater) * math.log(float(greater_correct)/len(greater), 2) - float(greater_wrong)/len(greater) * math.log(float(greater_wrong)/len(greater), 2)
-
-            if smaller_correct == 0 or smaller_wrong == 0:
-                smaller_information_gain = 0
-            else:
-                smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
-
-            information_gain = 1 - float(len(greater))/len(boundaries) * greater_information_gain - float(len(smaller))/len(boundaries) * smaller_information_gain
-
-            if information_gain > best_information_gain:
-                best_information_gain = information_gain
+            if gain > best_gain:
+                best_gain = gain
                 best_boundary = boundaries[i]
                 best_feature_index = feature
+                right = greater
+                left = smaller
 
-    # print (best_feature_index, best_boundary)
-    return (best_feature_index, best_boundary)
+    return {'index': best_feature_index, 'value': best_boundary,
+            'left': left, 'right': right, 'gain': best_gain}
 
-def create_tree(max_depth, data, truth):
-    root = {}
+# Takes in the current node, the maximum depth, and the current depth
+def build_tree(node, max_depth, depth):
 
-    test = get_best_feature(data, truth)
+    left = node['left']
+    right = node['right']
 
+    if depth >= max_depth:
+        return
+
+    # If the left or right groups are empty return
+    if not left or not right:
+        return
+
+    node['left'] = get_best_feature(node['left'])
+    build_tree(node['left'], max_depth, depth+1)
+
+    node['right'] = get_best_feature(node['right'])
+    build_tree(node['right'], max_depth, depth+1)
+
+# Compute the majority class based on the input data group
+# Returns 1 or -1
+def majority_class(data_group):
+    num = 0
+
+    for item in data_group:
+        num = num + item[0]
+
+    if num >= 0:
+        return 1
+    else:
+        return -1
+
+def init_tree(max_depth, data):
+
+    root = get_best_feature(data)
+    build_tree(root, max_depth, 1)
+    print "NOTE: F(number) corresponds to the feature number."
+    print_tree(root, 0)
+
+# Thanks to:
+#http://machinelearningmastery.com/implement-decision-tree-algorithm-scratch-python/
+# For a nice printing function.
+# We updated it to reflect assignment reqs
+def print_tree(node, depth):
+
+    if isinstance(node, dict):
+        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']+1), node['value'], node['gain'])))
+        print_tree(node['left'], depth+1)
+        print_tree(node['right'], depth+1)
+    else:
+        x = majority_class(node)
+        if x is 1:
+            print (depth+1)*' ' + str(x)
+        else:
+            print depth*' ' + str(x)
 def main():
 
     train_truth, train_ftrs = read_data('knn_train.csv')
@@ -212,7 +271,10 @@ def main():
 
     #run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
 
-    create_tree(1, train_ftrs, train_truth)
+    # Regroup data set
+    train_data = np.insert(train_ftrs, 0, train_truth, axis=1)
+
+    init_tree(3, train_data)
 
 
 if __name__ == '__main__':
