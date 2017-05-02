@@ -7,6 +7,7 @@
 import csv
 import numpy as np
 import math
+import os
 import copy
 from matplotlib import pyplot as plt
 import itertools
@@ -125,7 +126,7 @@ def run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs):
 
         testing_mistakes.append(compute_knn_accuracy(i, train_truth, train_ftrs, test_ftrs, test_truth))
 
-    graph_data(k, fold_mistakes, training_mistakes, testing_mistakes)
+    #graph_data(k, fold_mistakes, training_mistakes, testing_mistakes)
 
 def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
 
@@ -140,178 +141,12 @@ def graph_data(k, fold_mistakes, training_mistakes, testing_mistakes):
     plt.xlim([1, 51])
     plt.show()
 
-def _compute_info_gain(greater, smaller):
-
-    greater_correct = 0
-    smaller_correct = 0
-    total_data_points = len(greater) + len(smaller)
-
-    for x in greater:
-        if x[0] == 1:
-            greater_correct += 1
-
-    for y in smaller:
-        if y[0] == -1:
-            smaller_correct += 1
-
-    greater_wrong = len(greater) - greater_correct
-    smaller_wrong = len(smaller) - smaller_correct
-
-    information_gain = 0
-    greater_information_gain = 0
-    smaller_information_gain = 0
-
-    if greater_correct == 0 or greater_wrong == 0:
-        greater_information_gain = 0
-    else:
-        greater_information_gain = -1 * float(greater_correct)/len(greater) * math.log(float(greater_correct)/len(greater), 2) - float(greater_wrong)/len(greater) * math.log(float(greater_wrong)/len(greater), 2)
-
-    if smaller_correct == 0 or smaller_wrong == 0:
-        smaller_information_gain = 0
-    else:
-        smaller_information_gain = -1 * float(smaller_correct)/len(smaller) * math.log(float(smaller_correct)/len(smaller), 2) - float(smaller_wrong)/len(smaller) * math.log(float(smaller_wrong)/len(smaller), 2)
-
-    return float(len(greater))/total_data_points * greater_information_gain, float(len(smaller))/total_data_points * smaller_information_gain
-
-# Returns information to be stored in a node of the decision tree
-def get_best_feature(data, parent_gain):
-
-    best_gain = 0
-    best_boundary = 0
-    best_feature_index = -1
-    left = []
-    right = []
-
-    for feature in range(1,len(data[0])):
-
-        boundaries = [float(data[i][feature]) for i in range( len(data))]
-
-        for i in range(len(boundaries)):
-
-            greater = []
-            smaller = []
-
-            for j in range(len(boundaries)):
-                if boundaries[j] >= boundaries[i]:
-                    greater.append(data[j])
-                elif boundaries[j] < boundaries[i]:
-                    smaller.append(data[j])
-
-            g_gain, l_gain = _compute_info_gain(greater, smaller)
-            gain = parent_gain - g_gain - l_gain
-
-            if gain > best_gain:
-                best_gain = gain
-                best_boundary = boundaries[i]
-                best_feature_index = feature
-                right = greater
-                left = smaller
-
-    return {'index': best_feature_index, 'value': best_boundary,
-            'left': left, 'right': right, 'gain': (best_gain, g_gain, l_gain)}
-
-# Takes in the current node, the maximum depth, and the current depth
-def build_tree(node, max_depth, depth):
-
-    if depth >= max_depth:
-        node['left'] = majority_class(node['left'])
-        node['right'] = majority_class(node['right'])
-        return
-
-    if not node['left'] or not node['right']:
-        node['left'] = node['right'] = majority_class(node['left'] + node['right'])
-        return
-
-    node['left'] = get_best_feature(node['left'], node['gain'][2])
-    build_tree(node['left'], max_depth, depth+1)
-
-    node['right'] = get_best_feature(node['right'], node['gain'][1])
-    build_tree(node['right'], max_depth, depth+1)
-
-# Compute the majority class based on the input data group
-# Returns 1 or -1
-def majority_class(data_group):
-    num = 0
-
-    for item in data_group:
-        num = num + item[0]
-
-    if num >= 0:
-        return 1
-    else:
-        return -1
-
-def init_tree(max_depth, data):
-
-    root = get_best_feature(data, 1)
-    build_tree(root, max_depth, 1)
-
-    return root
-
-def print_tree(node, depth):
-
-    if isinstance(node, dict):
-        print('%s[F%d < %.3f] => Info Gain: %.3f' % ((depth*' ', (node['index']), node['value'], node['gain'][0])))
-        print_tree(node['left'], depth+1)
-        print_tree(node['right'], depth+1)
-    else:
-        print (depth)*' ' + "Class: "+ str(node)
-
-# Special thanks to Jason Brownlee @ Machinelearningmastery.com
-# for some advice on an efficient prediction method :)
-def predict(node, data_row):
-
-    if data_row[node['index']-1] >= node['value']:
-        if isinstance(node['right'], dict):
-            return predict(node['right'], data_row)
-        else:
-            return node['right']
-    else:
-        if isinstance(node['left'], dict):
-            return predict(node['left'], data_row)
-        else:
-            return node['left']
-
-def classify(tree, data_set, truth_set):
-    classification = []
-    correct = 0
-
-    for row in data_set:
-        classification.append(predict(tree, row))
-
-    for i in range(len(classification)):
-        if classification[i] == truth_set[i]:
-            correct += 1
-
-    return 1 - float(correct)/len(truth_set)
-
 def main():
 
     train_truth, train_ftrs = read_data('knn_train.csv')
     test_truth, test_ftrs = read_data('knn_test.csv')
 
-    #run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
-
-    # Regroup data set
-    train_data = np.insert(train_ftrs, 0, train_truth, axis=1)
-
-    stump = init_tree(1, train_data)
-    #print_tree(stump, 0)
-
-    error = classify(stump, train_ftrs, train_truth)
-    print "TRAINING ERROR FOR STUMP: ", error
-    error = classify(stump, test_ftrs, test_truth)
-    print "TESTING ERROR FOR STUMP: ", error
-
-    depth_6_tree = init_tree(6, train_data)
-    print_tree(depth_6_tree, 0)
-
-    error = classify(depth_6_tree, train_ftrs, train_truth)
-    print "TRAINING ERROR FOR DEPTH 6 TREE: ", error
-    error = classify(depth_6_tree, test_ftrs, test_truth)
-    print "TESTING ERROR FOR DEPTH 6 TREE: ", error
-
-
+    run_K_nearest_neighbor(train_truth, train_ftrs, test_truth, test_ftrs)
 
 if __name__ == '__main__':
     main()
