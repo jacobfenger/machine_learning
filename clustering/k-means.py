@@ -4,8 +4,18 @@
 #                   Jacob Fenger
 ######################################################
 
+def get_data(filename):
+    file = open(filename, 'r')
+    
+    data = [] 
+
+    for line in file:
+        data.append(line)
+
+    return data
+
 def main():
-    print("Yep")
+    train_data = get_data('data.txt')
 
 if __name__ == '__main__':
     main()
