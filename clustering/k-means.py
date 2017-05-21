@@ -8,6 +8,7 @@ import math
 from matplotlib import pyplot as plt
 from itertools import izip
 from scipy.spatial import distance
+from scipy.cluster.hierarchy import linkage, dendrogram
 
 def get_data(filename):
     file = open(filename, 'r')
@@ -101,6 +102,17 @@ def main():
     # plt.xlabel('Number of Clusters')
     # plt.ylabel('SSE')
     # plt.show()
+
+    # Part 3/4
+    plt.title('Single Link Dendrogram for Last 10 Clusters')
+    plt.xlabel('Cluster number')
+    plt.ylabel('Distance')
+
+    Z = linkage(train_data, method='single')
+
+    d = dendrogram(Z, p=10, truncate_mode = 'lastp')
+    plt.plot()
+    plt.show()
 
 
 if __name__ == '__main__':
