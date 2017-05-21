@@ -56,7 +56,11 @@ def k_means(K, data, iters):
         for i in range(K):
             centers[i] = np.mean(clusters[i], axis=0)
 
-        sse.append(compute_SSE(K, data, clusters, centers))
+        # Part 1
+        #sse.append(compute_SSE(K, data, clusters, centers))
+
+        sse = compute_SSE(K, data, clusters, centers)
+
 
     # plt.plot(range(iters + 1), sse)
     # plt.title('Graph of SSE versus number of iterations for K=2')
@@ -78,14 +82,26 @@ def compute_SSE(K, data, clusters, centers):
 
         sse += x_sum
 
-    print "SSE: " + str(sse)
+    #print "SSE: " + str(sse)
     return sse
 
 def main():
     train_data = get_data('data-1.txt')
     sse = list()
 
-    k_means(2, train_data, 20);
+    # Part 1
+    #k_means(2, train_data, 20);
+
+    # Part 2
+    # for k in range(2, 15):
+    #     sse.append(k_means(k, train_data, 10))
+    #
+    # plt.plot(range(2, 15), sse)
+    # plt.title('Graph of SSE versus number of clusters')
+    # plt.xlabel('Number of Clusters')
+    # plt.ylabel('SSE')
+    # plt.show()
+
 
 if __name__ == '__main__':
     main()
